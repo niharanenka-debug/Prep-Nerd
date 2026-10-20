@@ -66,16 +66,19 @@ st.markdown(
         color: var(--green-dark); background: #fff; transition: .18s ease;
         min-height: 2.55rem;
     }
-    .stButton > button:hover, .stDownloadButton > button:hover {
-        border-color: #8db9a9; color: var(--green-dark); background: #f4faf7;
-    }
-    .stButton > button[kind="primary"] {
-        color: white; background: var(--green); border-color: var(--green);
-    }
-    .stButton > button[kind="primary"]:hover { background: var(--green-dark); border-color: var(--green-dark); color: white; }
-    .stTextInput input, .stTextArea textarea, .stNumberInput input {
-        border-radius: 10px; border-color: #dfe6e9; background: #fff;
-    }
+.stButton > button:hover, .stDownloadButton > button:hover {
+    border-color: #8db9a9; color: var(--green-dark); background: #f4faf7;
+}
+.stButton > button[kind="primary"] {
+    color: white; background: var(--green); border-color: var(--green);
+}
+.stButton > button[kind="primary"]:hover {
+    background: var(--green-dark); border-color: var(--green-dark); color: white;
+}
+.stTextInput input, .stTextArea textarea, .stNumberInput input {
+    color: #182b3a !important; border-radius: 10px;
+    border: 1px solid #9aaeb8 !important; background: #fff !important;
+}
     [data-baseweb="select"] > div { border-radius: 10px; border-color: #dfe6e9; }
     [data-testid="stTabs"] [data-baseweb="tab-list"] { gap: .4rem; border-bottom: 1px solid var(--line); }
     [data-testid="stTabs"] [data-baseweb="tab"] { color: var(--muted); font-weight: 650; padding: .7rem .95rem; }
