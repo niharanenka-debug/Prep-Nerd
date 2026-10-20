@@ -1,24 +1,44 @@
 import os
 from pathlib import Path
+
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except Exception:
     pass
-ROOT=Path(__file__).resolve().parents[1]
-DB_PATH=Path(os.getenv("DATABASE_PATH", ROOT/"prep_nerd.db"))
-MODEL=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
-QUESTION_COUNTS=(5,10,15,20,25)
-DIFFICULTIES=("Easy","Medium","Hard")
-ANALYSIS_DEPTHS=("Automatic","Quick","Standard","Deep","Exhaustive")
-SUMMARY_STYLES=("Executive Summary","Key Takeaways","Detailed Analysis","Short Abstract","Action Items")
-SUMMARY_LENGTHS=("Very Short","Medium","Comprehensive")
-MAX_QUESTIONS=25
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def _setting(name, default):
+    value = os.getenv(name)
+    if value:
+        return value
+    try:
+        import streamlit as st
+        return st.secrets.get(name, default)
+    except Exception:
+        return default
+
+
+DB_PATH = Path(_setting("DATABASE_PATH", str(ROOT / "prep_nerd.db")))
+MODEL = _setting("GEMINI_MODEL", "gemini-3.5-flash-lite")
+EMBEDDING_MODEL = _setting("GEMINI_EMBEDDING_MODEL", "gemini-embedding-001")
+LOCAL_DEMO = os.getenv("PREP_NERD_LOCAL_DEMO", "false").strip().lower() in {"1", "true", "yes"}
+QUESTION_COUNTS = (5, 10, 15, 20, 25)
+DIFFICULTIES = ("Easy", "Medium", "Hard")
+ANALYSIS_DEPTHS = ("Automatic", "Quick", "Standard", "Deep", "Exhaustive")
+SUMMARY_STYLES = ("Executive Summary", "Key Takeaways", "Detailed Analysis", "Short Abstract", "Action Items")
+SUMMARY_LENGTHS = ("Very Short", "Medium", "Comprehensive")
+MAX_QUESTIONS = 25
+
 
 def api_key():
-    key=os.getenv("GEMINI_API_KEY")
-    if key: return key
+    key = os.getenv("GEMINI_API_KEY")
+    if key:
+        return key
     try:
         import streamlit as st
         return st.secrets.get("GEMINI_API_KEY")
-    except Exception: return None
+    except Exception:
+        return None
