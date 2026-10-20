@@ -144,7 +144,6 @@ for key, default in {
 
 MODULES = [
     "Dashboard",
-    "Quiz Generator",
     "Universal Summarizer",
     "Flashcards",
     "Chat with Material",
@@ -259,7 +258,6 @@ def dashboard():
 
     st.markdown('<div class="section-heading"><h3>Your learning toolkit</h3><span class="section-note">Pick up wherever you need help</span></div>', unsafe_allow_html=True)
     tools = [
-        ("Q", "Quiz Generator", "Build a focused set of multiple-choice questions from your material.", "Quiz Generator"),
         ("S", "Universal Summarizer", "Find the key ideas in a format that suits the way you revise.", "Universal Summarizer"),
         ("F", "Flashcards", "Create quick recall prompts and rate what you know.", "Flashcards"),
         ("A", "Chat with Material", "Ask questions and get answers grounded in your source.", "Chat with Material"),
@@ -473,8 +471,6 @@ def chat():
 
 if module == "Dashboard":
     dashboard()
-elif module == "Quiz Generator":
-    quiz_page()
 elif module == "Mock Exam":
     quiz_page(exam=True)
 elif module == "Universal Summarizer":
