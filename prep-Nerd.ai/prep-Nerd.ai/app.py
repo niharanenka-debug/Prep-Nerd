@@ -166,10 +166,11 @@ def authenticated_user_id():
             try:
                 st.login()
             except Exception as exc:
-                st.error(f"Google sign-in is not configured yet: {exc}")
+                st.error(f"Google sign-in is not configured for this Streamlit app: {exc}")
+                st.info("If another Streamlit app already signs in with Google, reuse its client_id and client_secret in this app's private Secrets. Streamlit app secrets are not shared automatically. The existing Google client must also allow this app's /oauth2callback URL; a new client is not required if you can reuse the old one.")
     else:
         st.error("This Streamlit version does not support OIDC sign-in. Install the project requirements and configure Google OAuth.")
-    st.caption("Admin setup: add the Google OIDC settings described in README.md. For a one-person local preview only, set PREP_NERD_LOCAL_DEMO=true.")
+    st.caption("This app runs on Streamlit Community Cloud; Manus Website Builder login is separate and is not inherited here. Setup and credential reuse steps are in README.md. For a one-person local preview only, set PREP_NERD_LOCAL_DEMO=true.")
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
