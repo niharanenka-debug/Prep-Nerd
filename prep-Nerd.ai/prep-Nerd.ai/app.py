@@ -126,6 +126,15 @@ st.markdown(
         .hero { padding:1.55rem; }
         .hero:after { right:-160px; }
     }
+    [data-testid="stChatInput"] textarea {
+    color: #ffffff !important;
+    caret-color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+[data-testid="stChatInput"] textarea::placeholder {
+    color: #b8c5d6 !important;
+    -webkit-text-fill-color: #b8c5d6 !important;
+}
     </style>
     """,
     unsafe_allow_html=True,
