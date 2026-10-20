@@ -7,7 +7,7 @@ except Exception:
     pass
 ROOT=Path(__file__).resolve().parents[1]
 DB_PATH=Path(os.getenv("DATABASE_PATH", ROOT/"prep_nerd.db"))
-MODEL=os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+MODEL=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 QUESTION_COUNTS=(5,10,15,20,25)
 DIFFICULTIES=("Easy","Medium","Hard")
 ANALYSIS_DEPTHS=("Automatic","Quick","Standard","Deep","Exhaustive")
