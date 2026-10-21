@@ -303,11 +303,11 @@ def dashboard():
         unsafe_allow_html=True,
     )
     sources = db.sources(user_id=USER_ID)
-    notes_count = len(db.artifacts("notes", user_id=USER_ID))
+  
     cards_count = len(db.artifacts("flashcards", user_id=USER_ID))
     mistakes_count = sum(item["status"] != "Reviewed" for item in db.mistakes(user_id=USER_ID))
     cols = st.columns(4)
-    for col, (label, value) in zip(cols, [("Sources added", len(sources)), ("Notes created", notes_count), ("Flashcard decks", cards_count), ("To review", mistakes_count)]):
+    for col, (label, value) in zip(cols, [("Sources added", len(sources)), ("Flashcard decks", cards_count), ("To review", mistakes_count)]):
         col.metric(label, value)
 
     st.markdown('<div class="section-heading"><h3>Your learning toolkit</h3><span class="section-note">Pick up wherever you need help</span></div>', unsafe_allow_html=True)
