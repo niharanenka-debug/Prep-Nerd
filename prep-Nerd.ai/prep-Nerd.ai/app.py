@@ -188,7 +188,7 @@ for key, default in {
 
 MODULES = [
     "Dashboard", "Universal Summarizer", "Flashcards", "Chat with Material",
-    "Notes Generator", "Mock Exam", "Mistake Notebook",
+     "Mock Exam", "Mistake Notebook",
 ]
 
 
@@ -315,7 +315,6 @@ def dashboard():
         ("S", "Universal Summarizer", "Find the key ideas in a format that suits the way you revise.", "Universal Summarizer"),
         ("F", "Flashcards", "Practice active recall, track mastery, and resume a deck.", "Flashcards"),
         ("A", "Chat with Material", "Ask natural questions grounded in relevant source passages.", "Chat with Material"),
-        ("N", "Notes Generator", "Shape dense reading into structured, editable revision notes.", "Notes Generator"),
         ("E", "Mock Exam", "Test yourself with a timed practice exam.", "Mock Exam"),
         ("↗", "Mistake Notebook", "Revisit missed questions and track what you have reviewed.", "Mistake Notebook"),
     ]
@@ -717,8 +716,6 @@ elif module == "Mock Exam":
     quiz_page(exam=True)
 elif module == "Universal Summarizer":
     text_module("summary", "Universal Summarizer", "Summarize the source")
-elif module == "Notes Generator":
-    text_module("notes", "Notes Generator", "Create revision notes")
 elif module == "Flashcards":
     flashcards()
 elif module == "Mistake Notebook":
