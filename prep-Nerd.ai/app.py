@@ -303,6 +303,7 @@ with st.sidebar:
         "Mock Exam":"◉  Mock exam",
         "Mistake Notebook":"↗  Mistakes",
     }
+    
     selected_module = st.radio(
         "Navigate",
         MODULES,
