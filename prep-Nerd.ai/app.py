@@ -285,8 +285,8 @@ MODULES = [
 
 def go_to(target):
     st.session_state.module = target
+    st.session_state.nav_module = target
     st.session_state["_nav_pulse"] = time.time()
-
 
 # New persistent app shell: compact navigation rail + contextual workspace header.
 with st.sidebar:
@@ -303,14 +303,13 @@ with st.sidebar:
         "Mock Exam":"◉  Mock exam",
         "Mistake Notebook":"↗  Mistakes",
     }
-     nav_options = [nav_labels[x] for x in MODULES]
     selected_module = st.radio(
         "Navigate",
         MODULES,
         index=MODULES.index(st.session_state.module),
         format_func=lambda name: nav_labels[name],
         label_visibility="collapsed",
-        key="nav_display",
+        key="nav_module",
     )
     module = selected_module
     st.session_state.module = module
