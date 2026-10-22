@@ -39,250 +39,197 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    :root {
-      --brand:#6d5dfc; --brand-2:#8b7cff; --brand-dark:#5144c7;
-      --ink:#171827; --muted:#6f7285; --line:rgba(110,115,150,.16);
-      --glass:rgba(255,255,255,.68); --glass-strong:rgba(255,255,255,.82);
-      --bg:#f5f6fb; --shadow:0 18px 55px rgba(36,39,70,.09);
-      --shadow-soft:0 8px 28px rgba(36,39,70,.07);
+    :root{
+      --bg:#070812; --panel:rgba(17,19,34,.72); --panel2:rgba(24,27,48,.72);
+      --line:rgba(255,255,255,.09); --text:#f6f7fb; --muted:#a6abc0;
+      --brand:#8b7cff; --brand2:#5ee7ff; --good:#62e6a7; --danger:#ff718c;
+      --shadow:0 24px 80px rgba(0,0,0,.32);
     }
-    html, body, [class*="css"], button, input, textarea, select {
-      font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif !important;
+    html,body,[class*="css"],button,input,textarea,select{
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
     }
-    .stApp {
-      color:var(--ink);
+    .stApp{
+      color:var(--text);
       background:
-        radial-gradient(circle at 8% 5%, rgba(109,93,252,.12), transparent 26%),
-        radial-gradient(circle at 94% 12%, rgba(67,190,255,.10), transparent 25%),
-        linear-gradient(135deg,#f8f9fd 0%,#f2f4fa 100%);
+        radial-gradient(700px 420px at 8% -5%,rgba(139,124,255,.22),transparent 65%),
+        radial-gradient(650px 430px at 96% 4%,rgba(94,231,255,.13),transparent 62%),
+        radial-gradient(600px 500px at 52% 100%,rgba(139,124,255,.08),transparent 68%),
+        var(--bg);
       min-height:100vh;
     }
-    [data-testid="stHeader"] { background:rgba(248,249,253,.58); backdrop-filter:blur(18px); }
-    [data-testid="stMainBlockContainer"] { max-width:1380px; padding:2rem 2rem 4rem; }
-    h1,h2,h3,h4 { color:var(--ink); letter-spacing:-.035em; }
-    h1 { font-size:clamp(2rem,3.4vw,3rem) !important; line-height:1.08 !important; font-weight:760 !important; }
-    h2 { font-size:1.65rem !important; font-weight:720 !important; }
-    h3 { font-size:1.2rem !important; font-weight:700 !important; }
-    p,label,.stMarkdown { color:var(--ink); }
+    .stApp:before{
+      content:"";position:fixed;inset:0;pointer-events:none;opacity:.35;
+      background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+                       linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+      background-size:42px 42px;mask-image:linear-gradient(to bottom,#000,transparent 82%);
+    }
+    [data-testid="stHeader"]{background:rgba(7,8,18,.48);backdrop-filter:blur(20px);z-index:5}
+    [data-testid="stMainBlockContainer"]{max-width:1450px;padding:1.15rem 2rem 5rem}
+    h1,h2,h3,h4{color:var(--text)!important;letter-spacing:-.045em}
+    h1{font-size:clamp(2.1rem,4vw,4.25rem)!important;line-height:.98!important;font-weight:800!important}
+    h2{font-size:2rem!important;font-weight:780!important}
+    h3{font-size:1.18rem!important;font-weight:720!important}
+    p,label,.stMarkdown{color:var(--text)}
+    .stCaption,.stCaption p{color:var(--muted)!important}
 
-    /* Glass sidebar */
-    [data-testid="stSidebar"] {
-      background:linear-gradient(180deg,rgba(250,251,255,.82),rgba(242,244,251,.72));
-      border-right:1px solid rgba(109,93,252,.12);
-      backdrop-filter:blur(22px);
-      -webkit-backdrop-filter:blur(22px);
+    /* New app shell */
+    [data-testid="stSidebar"]{
+      background:rgba(8,9,19,.78);border-right:1px solid var(--line);
+      backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
     }
-    [data-testid="stSidebar"] > div:first-child { padding:1.25rem .9rem 1.2rem; }
-    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color:var(--muted); }
-    [data-testid="stSidebar"] [data-testid="stRadio"] label {
-      border:1px solid transparent; border-radius:12px; padding:.58rem .7rem; margin:.18rem 0;
-      color:#4d5062; font-weight:600; transition:all .22s ease;
+    [data-testid="stSidebar"]>div:first-child{padding:1rem .75rem}
+    [data-testid="stSidebar"] [data-testid="stRadio"] label{
+      color:#9da2ba;border:1px solid transparent;border-radius:14px;
+      padding:.72rem .82rem;margin:.18rem 0;font-weight:650;
+      transition:transform .22s ease,background .22s ease,border-color .22s ease,color .22s ease;
     }
-    [data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
-      background:rgba(255,255,255,.62); border-color:var(--line); transform:translateX(2px);
+    [data-testid="stSidebar"] [data-testid="stRadio"] label:hover{
+      transform:translateX(4px);background:rgba(255,255,255,.045);border-color:var(--line);color:#fff;
     }
-    [data-testid="stSidebar"] [data-testid="stRadio"] [aria-checked="true"] + div {
-      color:var(--brand); font-weight:750;
+    [data-testid="stSidebar"] [data-testid="stRadio"] [aria-checked="true"]+div{
+      color:#fff!important;font-weight:750;
     }
-    [data-testid="stSidebar"] [data-testid="stRadio"] [aria-checked="true"] ~ * {
-      color:var(--brand);
-    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] [aria-checked="true"]~*{color:#fff!important}
+    [data-testid="stSidebar"] hr{border-color:var(--line)}
+    [data-testid="stSidebar"] .stSelectbox>div>div{background:rgba(255,255,255,.045)!important;color:#fff!important}
 
-    /* Shared glass surfaces */
-    [data-testid="stMetric"], .source-list, .empty-state, [data-testid="stExpander"],
-    [data-testid="stChatMessage"], [data-testid="stFileUploader"] section {
-      background:var(--glass) !important;
-      border:1px solid var(--line) !important;
-      box-shadow:var(--shadow-soft);
-      backdrop-filter:blur(18px);
-      -webkit-backdrop-filter:blur(18px);
+    .app-topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:1rem;
+      padding:.65rem .8rem;margin:0 0 1.2rem;border:1px solid var(--line);
+      background:rgba(15,17,31,.58);border-radius:18px;backdrop-filter:blur(22px);
+      box-shadow:0 12px 40px rgba(0,0,0,.16);animation:rise .5s ease both;
     }
-    [data-testid="stMetric"] {
-      border-radius:18px; padding:1.05rem 1.15rem;
-      transition:transform .22s ease,box-shadow .22s ease;
+    .brand-lockup{display:flex;align-items:center;gap:.7rem;margin:0}
+    .brand-mark{
+      width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;
+      font-weight:900;background:linear-gradient(135deg,var(--brand),#5b4bdb);
+      box-shadow:0 10px 30px rgba(139,124,255,.28);
     }
-    [data-testid="stMetric"]:hover { transform:translateY(-3px); box-shadow:var(--shadow); }
-    [data-testid="stMetricLabel"] p { color:var(--muted); font-size:.82rem; font-weight:650; }
-    [data-testid="stMetricValue"] { color:var(--ink); font-size:1.9rem; font-weight:780; }
-
-    .stButton > button, .stDownloadButton > button, [data-testid="stFormSubmitButton"] button {
-      min-height:2.55rem; border-radius:12px; border:1px solid var(--line);
-      background:rgba(255,255,255,.72); color:var(--ink); font-weight:680;
-      box-shadow:0 4px 14px rgba(40,43,75,.045);
-      transition:transform .18s ease,box-shadow .18s ease,background .18s ease,border-color .18s ease;
-    }
-    .stButton > button:hover, .stDownloadButton > button:hover, [data-testid="stFormSubmitButton"] button:hover {
-      transform:translateY(-2px); background:rgba(255,255,255,.92);
-      border-color:rgba(109,93,252,.3); box-shadow:0 9px 22px rgba(40,43,75,.09);
-    }
-    .stButton > button:active { transform:translateY(0) scale(.985); }
-    .stButton > button[kind="primary"], [data-testid="stFormSubmitButton"] button[kind="primary"] {
-      color:#fff; background:linear-gradient(135deg,var(--brand),var(--brand-2));
-      border-color:transparent; box-shadow:0 9px 22px rgba(109,93,252,.24);
-    }
-    .stButton > button[kind="primary"]:hover, [data-testid="stFormSubmitButton"] button[kind="primary"]:hover {
-      color:#fff; background:linear-gradient(135deg,var(--brand-dark),var(--brand));
-      box-shadow:0 12px 28px rgba(109,93,252,.3);
-    }
-    .stButton > button:focus-visible, .stDownloadButton > button:focus-visible,
-    input:focus-visible, textarea:focus-visible, [data-baseweb="select"]:focus-within {
-      outline:2px solid var(--brand) !important; outline-offset:2px !important;
-      box-shadow:0 0 0 4px rgba(109,93,252,.12) !important;
+    .brand-name{font-weight:800;letter-spacing:-.03em;color:#fff}
+    .brand-tag{font-size:.68rem;color:#7f859e;margin-top:1px}
+    .top-status{
+      border:1px solid rgba(98,230,167,.18);background:rgba(98,230,167,.07);
+      color:#9af0c5;border-radius:999px;padding:.38rem .65rem;font-size:.72rem;font-weight:700;
     }
 
-    .stTextInput input, .stTextArea textarea, .stNumberInput input, [data-testid="stChatInput"] textarea {
-      color:var(--ink) !important; caret-color:var(--brand) !important;
-      -webkit-text-fill-color:var(--ink) !important; background:rgba(255,255,255,.78) !important;
-      border-radius:12px !important; border:1px solid var(--line) !important;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
-    }
-    .stTextInput input:focus, .stTextArea textarea:focus, .stNumberInput input:focus,
-    [data-testid="stChatInput"] textarea:focus { border-color:rgba(109,93,252,.55) !important; }
-    .stTextInput input::placeholder, .stTextArea textarea::placeholder, [data-testid="stChatInput"] textarea::placeholder {
-      color:#85889a !important; -webkit-text-fill-color:#85889a !important; opacity:1 !important;
-    }
-    [data-baseweb="select"] > div {
-      border-radius:12px; border-color:var(--line); background:rgba(255,255,255,.78);
-    }
-    [data-baseweb="popover"] [role="option"] { color:var(--ink); }
-
-    [data-testid="stTabs"] [data-baseweb="tab-list"] {
-      gap:.35rem; border-bottom:1px solid var(--line);
-      background:rgba(255,255,255,.28); border-radius:14px 14px 0 0;
-    }
-    [data-testid="stTabs"] [data-baseweb="tab"] {
-      color:var(--muted); font-weight:650; padding:.7rem .95rem; transition:all .18s ease;
-    }
-    [data-testid="stTabs"] [aria-selected="true"] {
-      color:var(--brand); border-bottom-color:var(--brand) !important;
-    }
-    [data-testid="stFileUploader"] section { border-radius:16px; }
-    [data-testid="stExpander"] { border-radius:16px; }
-    [data-testid="stChatMessage"] { border-radius:16px; margin:.45rem 0; }
-    [data-testid="stProgressBar"] > div > div { background:linear-gradient(90deg,var(--brand),var(--brand-2)); }
-    [data-testid="stCheckbox"] label, [data-testid="stRadio"] label { color:var(--ink); }
-    hr { border-color:var(--line); }
-
-    /* Brand */
-    .brand-lockup { display:flex; align-items:center; gap:.7rem; margin:0 0 1.35rem .25rem; }
-    .brand-mark {
-      display:grid; place-items:center; width:40px; height:40px; border-radius:13px;
-      background:linear-gradient(135deg,var(--brand),var(--brand-2)); color:white;
-      font-size:17px; font-weight:800; box-shadow:0 8px 20px rgba(109,93,252,.25);
-    }
-    .brand-name { font-size:1.04rem; font-weight:780; letter-spacing:-.03em; color:var(--ink); }
-    .brand-tag { color:var(--muted); font-size:.7rem; margin-top:.08rem; }
-
-    /* Dashboard */
-    .hero {
-      position:relative; overflow:hidden; padding:2.7rem 2.8rem; border-radius:26px;
+    /* Hero / dashboard */
+    .hero-new{
+      position:relative;overflow:hidden;border:1px solid var(--line);border-radius:30px;
+      padding:3.1rem 3rem;margin-bottom:1.2rem;
       background:
-        linear-gradient(135deg,rgba(255,255,255,.82),rgba(240,240,255,.58)),
-        radial-gradient(circle at 90% 15%,rgba(109,93,252,.18),transparent 35%);
-      border:1px solid rgba(109,93,252,.14); margin-bottom:1.5rem;
-      box-shadow:var(--shadow); backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px);
-      animation:surface-in .55s ease both;
+        linear-gradient(135deg,rgba(139,124,255,.17),rgba(94,231,255,.07) 52%,rgba(255,255,255,.025)),
+        rgba(14,16,30,.72);
+      box-shadow:var(--shadow);animation:rise .6s ease both;
     }
-    .hero:before {
-      content:""; position:absolute; width:310px; height:310px; right:-95px; top:-165px;
-      border-radius:50%; border:1px solid rgba(109,93,252,.2);
-      box-shadow:0 0 0 28px rgba(109,93,252,.035),0 0 0 58px rgba(109,93,252,.025);
+    .hero-new:before{
+      content:"";position:absolute;width:430px;height:430px;right:-130px;top:-220px;border-radius:50%;
+      border:1px solid rgba(139,124,255,.22);box-shadow:0 0 0 40px rgba(139,124,255,.035),0 0 0 90px rgba(94,231,255,.025);
     }
-    .hero h1 { max-width:760px; margin:.2rem 0 .7rem; position:relative; }
-    .hero p { color:#55586b; font-size:1rem; max-width:680px; margin:0; line-height:1.7; position:relative; }
-    .eyebrow {
-      color:var(--brand); font-size:.72rem; font-weight:800; letter-spacing:.11em;
-      text-transform:uppercase; margin-bottom:.65rem;
-    }
-    .section-heading {
-      display:flex; align-items:baseline; justify-content:space-between; gap:.7rem;
-      margin:1.9rem 0 .8rem;
-    }
-    .section-heading h3 { margin:0; }
-    .section-note { color:var(--muted); font-size:.82rem; }
+    .hero-kicker{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#a9a0ff;font-weight:800}
+    .hero-new h1{max-width:850px;margin:.7rem 0 1rem}
+    .hero-new p{max-width:700px;color:#aeb3c7;font-size:1rem;line-height:1.7;margin:0}
+    .hero-pills{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1.5rem}
+    .hero-pill{border:1px solid var(--line);background:rgba(255,255,255,.045);border-radius:999px;padding:.45rem .7rem;color:#c9cde0;font-size:.73rem}
 
-    .tool-card {
-      height:100%; min-height:158px; padding:1.15rem 1.2rem;
-      background:rgba(255,255,255,.63); border:1px solid var(--line); border-radius:18px;
-      box-shadow:var(--shadow-soft); backdrop-filter:blur(16px);
-      transition:transform .24s cubic-bezier(.2,.7,.2,1),box-shadow .24s ease,border-color .24s ease;
-    }
-    .tool-card:hover {
-      transform:translateY(-5px); box-shadow:0 18px 38px rgba(36,39,70,.11);
-      border-color:rgba(109,93,252,.25);
-    }
-    .tool-icon {
-      width:40px; height:40px; border-radius:13px; display:grid; place-items:center;
-      background:linear-gradient(135deg,rgba(109,93,252,.13),rgba(139,124,255,.06));
-      color:var(--brand); font-size:1rem; font-weight:800; margin-bottom:.85rem;
-      border:1px solid rgba(109,93,252,.12);
-    }
-    .tool-card h4 { margin:0 0 .35rem; font-size:1rem; font-weight:720; letter-spacing:-.02em; }
-    .tool-card p { color:var(--muted); font-size:.84rem; line-height:1.52; margin:0; }
+    .section-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin:1.7rem 0 .8rem}
+    .section-heading h3{margin:0}.section-note{color:var(--muted);font-size:.76rem}
+    .module-intro{color:var(--muted)!important;margin-top:-.25rem;margin-bottom:1.1rem}
 
-    .source-banner {
-      display:flex; gap:.7rem; align-items:flex-start;
-      background:rgba(233,250,241,.72); border:1px solid rgba(31,150,91,.18);
-      border-radius:14px; padding:.8rem .95rem; color:#276845; font-size:.86rem;
-      margin:.25rem 0 1rem; box-shadow:0 8px 22px rgba(31,150,91,.06);
-      animation:surface-in .35s ease both;
+    .quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem;margin-top:.7rem}
+    .quick-card{
+      min-height:175px;padding:1.2rem;border:1px solid var(--line);border-radius:22px;
+      background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.025));
+      backdrop-filter:blur(18px);box-shadow:0 12px 45px rgba(0,0,0,.12);
+      transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,box-shadow .3s;
     }
-    .module-intro { color:var(--muted); margin-top:-.35rem; margin-bottom:1rem; }
-    .source-list { border-radius:16px; padding:.3rem 1rem; }
-    .source-row {
-      display:flex; justify-content:space-between; gap:1rem; align-items:center;
-      padding:.8rem .1rem; border-bottom:1px solid rgba(110,115,150,.1);
-      transition:background .18s ease,transform .18s ease;
+    .quick-card:hover{transform:translateY(-7px);border-color:rgba(139,124,255,.34);box-shadow:0 22px 55px rgba(0,0,0,.2)}
+    .quick-icon{
+      width:42px;height:42px;border-radius:14px;display:grid;place-items:center;
+      background:linear-gradient(135deg,rgba(139,124,255,.2),rgba(94,231,255,.1));
+      color:#c3bcff;font-weight:850;margin-bottom:1rem
     }
-    .source-row:hover { background:rgba(255,255,255,.5); transform:translateX(3px); }
-    .source-row:last-child { border-bottom:0; }
-    .source-title { color:var(--ink); font-weight:650; }
-    .source-meta { color:var(--muted); font-size:.78rem; white-space:nowrap; }
-    .empty-state {
-      text-align:center; border-style:dashed !important; border-radius:16px;
-      padding:1.6rem; color:var(--muted);
-    }
-    .flashcard {
-      min-height:245px; display:flex; flex-direction:column; justify-content:center; align-items:center;
-      text-align:center; padding:2rem; border:1px solid rgba(109,93,252,.16); border-radius:22px;
-      background:linear-gradient(135deg,rgba(255,255,255,.82),rgba(240,241,255,.66));
-      box-shadow:var(--shadow); backdrop-filter:blur(18px);
-      animation:card-in .32s cubic-bezier(.2,.7,.2,1) both;
-    }
-    .flashcard.is-back {
-      background:linear-gradient(135deg,rgba(255,255,255,.82),rgba(234,250,241,.66));
-      border-color:rgba(31,150,91,.18);
-    }
-    .flashcard-label {
-      color:var(--brand); font-size:.74rem; font-weight:800; letter-spacing:.1em;
-      text-transform:uppercase; margin-bottom:.85rem;
-    }
-    .flashcard-copy { color:var(--ink); font-size:1.16rem; line-height:1.55; max-width:740px; }
+    .quick-card h4{margin:0 0 .4rem;font-size:1rem}
+    .quick-card p{margin:0;color:var(--muted);font-size:.8rem;line-height:1.5}
 
-    .auth-panel {
-      max-width:680px; margin:7vh auto 0; background:rgba(255,255,255,.72);
-      border:1px solid var(--line); border-radius:24px; padding:2.2rem;
-      box-shadow:var(--shadow); backdrop-filter:blur(22px);
-      animation:surface-in .45s ease both;
+    /* Glass components */
+    [data-testid="stMetric"],[data-testid="stExpander"],[data-testid="stFileUploader"] section,
+    [data-testid="stChatMessage"],.source-list,.empty-state,.source-panel,.workspace-panel{
+      background:var(--panel)!important;border:1px solid var(--line)!important;
+      border-radius:20px!important;box-shadow:0 12px 45px rgba(0,0,0,.12)!important;
+      backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
     }
+    [data-testid="stMetric"]{padding:1rem 1.05rem;transition:transform .25s ease,border-color .25s ease}
+    [data-testid="stMetric"]:hover{transform:translateY(-4px);border-color:rgba(139,124,255,.3)!important}
+    [data-testid="stMetricLabel"] p{color:var(--muted)!important;font-size:.76rem;font-weight:650}
+    [data-testid="stMetricValue"]{color:#fff!important;font-size:1.9rem;font-weight:800}
 
-    /* Smooth but restrained motion */
-    @keyframes surface-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-    @keyframes card-in { from { opacity:0; transform:translateY(7px) scale(.985); } to { opacity:1; transform:translateY(0) scale(1); } }
-    @media (max-width:900px) {
-      [data-testid="stMainBlockContainer"] { padding:1.35rem 1rem 3rem; }
-      .hero { padding:2rem 1.5rem; border-radius:21px; }
-      .hero:before { right:-175px; }
+    .stButton>button,.stDownloadButton>button,[data-testid="stFormSubmitButton"] button{
+      min-height:2.7rem;border-radius:13px!important;border:1px solid var(--line)!important;
+      background:rgba(255,255,255,.055)!important;color:#f4f5fb!important;font-weight:700!important;
+      transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s,background .2s,border-color .2s!important;
     }
-    @media (max-width:700px) {
-      .hero { padding:1.55rem 1.25rem; }
-      .section-heading { align-items:flex-start; flex-direction:column; gap:.2rem; }
-      .flashcard { min-height:195px; padding:1.25rem; }
-      .tool-card { min-height:145px; }
-      [data-testid="stMetric"] { border-radius:15px; }
+    .stButton>button:hover,.stDownloadButton>button:hover,[data-testid="stFormSubmitButton"] button:hover{
+      transform:translateY(-2px);background:rgba(255,255,255,.09)!important;
+      border-color:rgba(139,124,255,.4)!important;box-shadow:0 10px 28px rgba(0,0,0,.2)!important;
     }
-    @media (prefers-reduced-motion:reduce) {
-      *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
+    .stButton>button:active{transform:scale(.975)}
+    .stButton>button[kind="primary"],[data-testid="stFormSubmitButton"] button[kind="primary"]{
+      background:linear-gradient(135deg,var(--brand),#6654e8)!important;border-color:transparent!important;
+      box-shadow:0 12px 35px rgba(139,124,255,.2)!important;color:#fff!important;
+    }
+    .stButton>button[kind="primary"]:hover{background:linear-gradient(135deg,#9b8eff,#715ef4)!important}
+
+    .stTextInput input,.stTextArea textarea,.stNumberInput input,[data-testid="stChatInput"] textarea{
+      color:#f7f8fc!important;background:rgba(255,255,255,.045)!important;
+      -webkit-text-fill-color:#f7f8fc!important;border:1px solid var(--line)!important;border-radius:13px!important;
+    }
+    .stTextInput input::placeholder,.stTextArea textarea::placeholder,[data-testid="stChatInput"] textarea::placeholder{
+      color:#777e98!important;-webkit-text-fill-color:#777e98!important
+    }
+    [data-baseweb="select"]>div{background:rgba(255,255,255,.045)!important;border-color:var(--line)!important;border-radius:13px!important;color:#fff!important}
+    [data-baseweb="popover"]{background:#15182a!important;border:1px solid var(--line)!important}
+    [data-baseweb="popover"] [role="option"]{color:#fff!important}
+    [data-testid="stTabs"] [data-baseweb="tab-list"]{gap:.35rem;border-bottom:1px solid var(--line)}
+    [data-testid="stTabs"] [data-baseweb="tab"]{color:#858ba5;font-weight:700;padding:.75rem .9rem}
+    [data-testid="stTabs"] [aria-selected="true"]{color:#c6c0ff!important;border-bottom-color:var(--brand)!important}
+    [data-testid="stFileUploader"] section{padding:1rem}
+    [data-testid="stProgressBar"]>div>div{background:linear-gradient(90deg,var(--brand),var(--brand2))}
+    [data-testid="stChatMessage"]{padding:.85rem 1rem}
+    hr{border-color:var(--line)!important}
+
+    .source-panel{padding:1.15rem 1.2rem;margin:.7rem 0 1rem}
+    .source-panel-head{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.7rem}
+    .source-panel-title{font-size:1rem;font-weight:800;color:#fff}
+    .source-panel-sub{font-size:.74rem;color:var(--muted)}
+    .source-banner{
+      display:flex;gap:.65rem;align-items:center;background:rgba(98,230,167,.07);
+      border:1px solid rgba(98,230,167,.2);border-radius:14px;padding:.75rem .9rem;
+      color:#a4efc7;font-size:.82rem;margin:.4rem 0 .8rem
+    }
+    .source-list{padding:.35rem 1rem}
+    .source-row{display:flex;justify-content:space-between;gap:1rem;padding:.85rem .1rem;border-bottom:1px solid var(--line)}
+    .source-row:last-child{border-bottom:0}.source-title{color:#fff;font-weight:700}.source-meta{color:var(--muted);font-size:.75rem}
+    .empty-state{text-align:center;padding:1.8rem;color:var(--muted)}
+    .flashcard{
+      min-height:300px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;
+      padding:2.4rem;border:1px solid rgba(139,124,255,.25);border-radius:28px;
+      background:radial-gradient(circle at 50% 0%,rgba(139,124,255,.16),transparent 55%),rgba(16,18,34,.76);
+      box-shadow:var(--shadow);animation:card-in .38s cubic-bezier(.2,.8,.2,1)
+    }
+    .flashcard.is-back{background:radial-gradient(circle at 50% 0%,rgba(98,230,167,.12),transparent 55%),rgba(16,18,34,.76)}
+    .flashcard-label{color:#aaa1ff;font-size:.7rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin-bottom:1rem}
+    .flashcard-copy{color:#fff;font-size:1.25rem;line-height:1.6;max-width:780px}
+    .auth-panel{max-width:700px;margin:8vh auto;background:var(--panel);border:1px solid var(--line);border-radius:26px;padding:2.3rem;box-shadow:var(--shadow)}
+    @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes card-in{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+    @media(max-width:900px){.quick-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:700px){
+      [data-testid="stMainBlockContainer"]{padding:.7rem .8rem 3rem}
+      .hero-new{padding:2rem 1.35rem;border-radius:23px}.hero-new h1{font-size:2.35rem!important}
+      .quick-grid{grid-template-columns:1fr}.app-topbar{border-radius:14px}.flashcard{min-height:230px;padding:1.3rem}
+    }
+    @media(prefers-reduced-motion:reduce){
+      *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
     }
     </style>
     """,
@@ -338,31 +285,60 @@ MODULES = [
 
 def go_to(target):
     st.session_state.module = target
+    st.session_state["_nav_pulse"] = time.time()
 
 
+# New persistent app shell: compact navigation rail + contextual workspace header.
 with st.sidebar:
     st.markdown(
-        '<div class="brand-lockup"><div class="brand-mark">P</div><div><div class="brand-name">prep-Nerd.ai</div><div class="brand-tag">Your personal study space</div></div></div>',
+        '<div class="brand-lockup"><div class="brand-mark">P</div><div><div class="brand-name">prep-Nerd.ai</div><div class="brand-tag">AI study workspace</div></div></div>',
         unsafe_allow_html=True,
     )
-    st.caption("WORKSPACE")
-    module = st.radio("Navigate", MODULES, label_visibility="collapsed", key="module")
+    st.markdown("### Workspace")
+    nav_labels = {
+        "Dashboard":"⌂  Home",
+        "Universal Summarizer":"✦  Summarize",
+        "Flashcards":"▣  Flashcards",
+        "Chat with Material":"◌  Study chat",
+        "Mock Exam":"◉  Mock exam",
+        "Mistake Notebook":"↗  Mistakes",
+    }
+    nav_options = [nav_labels[x] for x in MODULES]
+    selected = st.radio(
+        "Navigate",
+        nav_options,
+        index=MODULES.index(st.session_state.module),
+        label_visibility="collapsed",
+        key="nav_display",
+    )
+    module = next((name for name, label in nav_labels.items() if label == selected), "Dashboard")
+    st.session_state.module = module
+
     st.divider()
-    st.caption(f"AI model · {MODEL}")
+    st.markdown("**Study engine**")
     depth = st.selectbox("Analysis depth", ANALYSIS_DEPTHS, index=2, key="analysis_depth")
+    st.caption(f"Model · {MODEL}")
     st.markdown(
-        '<div style="margin-top:1rem;padding:.8rem;border-radius:6px;background:#f0efee;color:#616161;font-size:.79rem;line-height:1.5">A focused workspace to turn learning material into understanding.</div>',
+        '<div style="margin-top:.8rem;padding:.85rem;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.035);color:#8e94ad;font-size:.75rem;line-height:1.55">Build a source once. Summarize it, quiz it, turn it into cards, and ask questions without leaving your workspace.</div>',
         unsafe_allow_html=True,
     )
     st.divider()
     identity = "Local demo" if LOCAL_DEMO else (getattr(st.user, "email", None) or "Signed in")
-    st.caption(f"Signed in · {identity}")
+    st.caption(f"●  {identity}")
     if not LOCAL_DEMO and hasattr(st, "logout") and st.button("Sign out", use_container_width=True):
         st.logout()
 
+st.markdown(
+    f'<div class="app-topbar"><div class="brand-lockup"><div class="brand-mark">P</div><div><div class="brand-name">{html.escape(module)}</div><div class="brand-tag">prep-Nerd.ai · focused study mode</div></div></div><div class="top-status">● Workspace ready</div></div>',
+    unsafe_allow_html=True,
+)
+
 
 def section_title(title, subtitle=None):
-    st.title(title)
+    st.markdown(
+        f'<div style="animation:rise .45s ease both"><div class="hero-kicker">Study workspace</div><h2 style="margin:.35rem 0 .35rem">{html.escape(title)}</h2></div>',
+        unsafe_allow_html=True,
+    )
     if subtitle:
         st.markdown(f'<p class="module-intro">{html.escape(subtitle)}</p>', unsafe_allow_html=True)
 
@@ -370,32 +346,33 @@ def section_title(title, subtitle=None):
 def source_box(scope="default"):
     safe_scope = re.sub(r"[^a-zA-Z0-9_-]", "_", scope)
     st.markdown(
-        '<div class="section-heading"><h3>Choose your study material</h3><span class="section-note">Add a source once, then use it across your tools</span></div>',
+        '<div class="source-panel"><div class="source-panel-head"><div><div class="source-panel-title">Build your study source</div><div class="source-panel-sub">One source powers every study tool</div></div><div class="hero-pill">STEP 1 · SOURCE</div></div>',
         unsafe_allow_html=True,
     )
     saved_sources = db.sources(user_id=USER_ID)
     if saved_sources:
-        with st.expander("Load a source saved to your account", expanded=False):
+        with st.expander("Use an existing source", expanded=False):
             saved_source_id = st.selectbox(
                 "Saved sources", [item["id"] for item in saved_sources],
                 format_func=lambda value: next((item["title"] for item in saved_sources if item["id"] == value), "Saved source"),
                 key=f"saved_source_{safe_scope}",
             )
-            if st.button("Use selected source", key=f"load_source_{safe_scope}"):
+            if st.button("Load source →", key=f"load_source_{safe_scope}", use_container_width=True):
                 source = next(item for item in saved_sources if item["id"] == saved_source_id)
                 st.session_state.source = source["content"]
                 st.session_state.source_id = source["id"]
                 st.rerun()
-    tab1, tab2, tab3 = st.tabs(["Topic or pasted text", "Upload a file", "Add a public URL"])
+
+    tab1, tab2, tab3 = st.tabs(["01 · Paste", "02 · Upload", "03 · URL"])
     with tab1:
-        topic = st.text_input("Topic", key=f"topic_{safe_scope}", placeholder="For example: Cell division, World War II, or SQL joins")
-        pasted = st.text_area("Paste notes or reading material", key=f"pasted_{safe_scope}", height=125, placeholder="Paste a passage, your notes, or a lesson transcript…")
+        topic = st.text_input("Topic", key=f"topic_{safe_scope}", placeholder="e.g. Operating systems, SQL joins, cell division")
+        pasted = st.text_area("Study material", key=f"pasted_{safe_scope}", height=145, placeholder="Paste notes, textbook content, lecture transcript, or your own material…")
     with tab2:
-        uploaded = st.file_uploader("Drop a file here or browse", key=f"upload_{safe_scope}", type=["txt", "pdf", "md", "markdown", "pptx", "docx"], help="TXT, PDF, Markdown, PPTX, or DOCX · up to 20 MB")
+        uploaded = st.file_uploader("Drop your file here", key=f"upload_{safe_scope}", type=["txt", "pdf", "md", "markdown", "pptx", "docx"], help="TXT · PDF · Markdown · PPTX · DOCX · up to 20 MB")
     with tab3:
         url = st.text_input("Public webpage or YouTube URL", key=f"url_{safe_scope}", placeholder="https://…")
 
-    if st.button("Process and save source", type="primary", key=f"process_source_{safe_scope}"):
+    if st.button("Create study source  →", type="primary", key=f"process_source_{safe_scope}", use_container_width=True):
         try:
             if uploaded:
                 text = extract_file(uploaded)
@@ -407,24 +384,25 @@ def source_box(scope="default"):
                 text = pasted.strip() or topic.strip()
                 title, ref, kind = topic.strip() or "Pasted notes", "", "text"
             else:
-                st.warning("Add a topic, paste some text, upload a file, or enter a URL first.")
+                st.warning("Add a topic, paste material, upload a file, or enter a URL.")
                 return st.session_state.get("source", "")
             if len(text.strip()) < 10:
-                st.warning("This source looks a little short. Please add more material and try again.")
+                st.warning("This source is too short. Add more material and try again.")
                 return st.session_state.get("source", "")
             source_id = db.add_source(title, kind, text, ref, user_id=USER_ID)
             st.session_state.source = text
             st.session_state.source_id = source_id
-            st.success(f"Saved **{title}** · {len(text):,} characters ready to study")
+            st.success(f"Ready · {len(text):,} characters loaded")
             return text
         except Exception as exc:
             st.error(str(exc))
     current_source = st.session_state.get("source", "")
     if current_source:
         st.markdown(
-            f'<div class="source-banner"><span>✓</span><span><strong>Study material ready.</strong> {len(current_source):,} characters are available to this tool.</span></div>',
+            f'<div class="source-banner"><span>✓</span><span><strong>Source ready.</strong> {len(current_source):,} characters available to this tool.</span></div>',
             unsafe_allow_html=True,
         )
+    st.markdown("</div>", unsafe_allow_html=True)
     return current_source
 
 
@@ -442,47 +420,50 @@ def ai_text(task, content):
 
 
 def dashboard():
-    st.markdown(
-        '<div class="hero"><div class="eyebrow">Your learning workspace</div><h1>Make your study time<br>count for more.</h1><p>Bring in your learning material, then turn it into clear explanations, useful practice, and a revision plan that works for you.</p></div>',
-        unsafe_allow_html=True,
-    )
     sources = db.sources(user_id=USER_ID)
-  
     cards_count = len(db.artifacts("flashcards", user_id=USER_ID))
     mistakes_count = sum(item["status"] != "Reviewed" for item in db.mistakes(user_id=USER_ID))
-    cols = st.columns(4)
-    for col, (label, value) in zip(cols, [("Sources added", len(sources)), ("Flashcard decks", cards_count), ("To review", mistakes_count)]):
-        col.metric(label, value)
 
-    st.markdown('<div class="section-heading"><h3>Your learning toolkit</h3><span class="section-note">Pick up wherever you need help</span></div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="hero-new"><div class="hero-kicker">PERSONAL LEARNING OS</div><h1>Study less randomly.<br>Learn with a system.</h1><p>Bring your material into one workspace, then move through the shortest useful path: understand → practice → recall → fix.</p><div class="hero-pills"><span class="hero-pill">AI summaries</span><span class="hero-pill">Active recall</span><span class="hero-pill">Mock exams</span><span class="hero-pill">Mistake tracking</span></div></div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('<div class="section-heading"><h3>Today at a glance</h3><span class="section-note">Your current workspace</span></div>', unsafe_allow_html=True)
+    cols = st.columns(3)
+    for col, (label, value) in zip(cols, [("Sources", len(sources)), ("Flashcard decks", cards_count), ("Open mistakes", mistakes_count)]):
+        with col:
+            st.metric(label, value)
+
+    st.markdown('<div class="section-heading"><h3>Choose your next move</h3><span class="section-note">Designed as a learning flow, not a menu</span></div>', unsafe_allow_html=True)
     tools = [
-        ("S", "Universal Summarizer", "Find the key ideas in a format that suits the way you revise.", "Universal Summarizer"),
-        ("F", "Flashcards", "Practice active recall, track mastery, and resume a deck.", "Flashcards"),
-        ("A", "Chat with Material", "Ask natural questions grounded in relevant source passages.", "Chat with Material"),
-        ("E", "Mock Exam", "Test yourself with a timed practice exam.", "Mock Exam"),
-        ("↗", "Mistake Notebook", "Revisit missed questions and track what you have reviewed.", "Mistake Notebook"),
+        ("✦", "Understand", "Universal Summarizer", "Turn dense material into a clean explanation, outline, or revision summary."),
+        ("▣", "Recall", "Flashcards", "Convert material into active-recall cards and resume where you stopped."),
+        ("◌", "Ask", "Chat with Material", "Ask questions and get answers grounded in the material you loaded."),
+        ("◉", "Practice", "Mock Exam", "Generate a timed exam and expose the topics you actually struggle with."),
+        ("↗", "Fix", "Mistake Notebook", "Review missed questions instead of repeatedly studying what you already know."),
     ]
-    for start in range(0, len(tools), 3):
+    for start_i in range(0, len(tools), 3):
         cols = st.columns(3)
-        for col, (icon, title, description, target) in zip(cols, tools[start:start + 3]):
+        for col, (icon, stage, title, description) in zip(cols, tools[start_i:start_i+3]):
             with col:
                 st.markdown(
-                    f'<div class="tool-card"><div class="tool-icon">{html.escape(icon)}</div><h4>{html.escape(title)}</h4><p>{html.escape(description)}</p></div>',
+                    f'<div class="quick-card"><div class="quick-icon">{icon}</div><div style="font-size:.68rem;color:#858ba5;font-weight:800;letter-spacing:.12em;text-transform:uppercase">{stage}</div><h4>{title}</h4><p>{description}</p></div>',
                     unsafe_allow_html=True,
                 )
-                st.button("Open tool  →", key=f"open_{target}", on_click=go_to, args=(target,), use_container_width=True)
+                st.button(f"Open {title}  →", key=f"open_{title}", on_click=go_to, args=(title,), use_container_width=True)
 
-    st.markdown('<div class="section-heading"><h3>Recently added material</h3><span class="section-note">Private to your account</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-heading"><h3>Recent material</h3><span class="section-note">Your saved sources</span></div>', unsafe_allow_html=True)
     if sources:
-        rows = []
+        rows=[]
         for source in sources[:6]:
-            title = html.escape(str(source.get("title", "Untitled source")))
-            kind = html.escape(str(source.get("kind", "source")).title())
-            created = html.escape(str(source.get("created_at", "")))
+            title=html.escape(str(source.get("title","Untitled source")))
+            kind=html.escape(str(source.get("kind","source")).title())
+            created=html.escape(str(source.get("created_at","")))
             rows.append(f'<div class="source-row"><span class="source-title">{title}</span><span class="source-meta">{kind} · {created}</span></div>')
-        st.markdown('<div class="source-list">' + "".join(rows) + "</div>", unsafe_allow_html=True)
+        st.markdown('<div class="source-list">'+''.join(rows)+'</div>', unsafe_allow_html=True)
     else:
-        st.markdown('<div class="empty-state"><strong>No sources yet.</strong><br>Add a topic, notes, file, or URL in any tool to get started.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="empty-state"><strong>No study source yet.</strong><br>Open any tool and create one. It will become reusable across your workspace.</div>', unsafe_allow_html=True)
 
 
 def quiz_page(exam=False):
