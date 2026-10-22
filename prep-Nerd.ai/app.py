@@ -303,17 +303,17 @@ with st.sidebar:
         "Mock Exam":"◉  Mock exam",
         "Mistake Notebook":"↗  Mistakes",
     }
-    nav_options = [nav_labels[x] for x in MODULES]
-    selected = st.radio(
+     nav_options = [nav_labels[x] for x in MODULES]
+    selected_module = st.radio(
         "Navigate",
-        nav_options,
+        MODULES,
         index=MODULES.index(st.session_state.module),
+        format_func=lambda name: nav_labels[name],
         label_visibility="collapsed",
         key="nav_display",
     )
-    module = next((name for name, label in nav_labels.items() if label == selected), "Dashboard")
+    module = selected_module
     st.session_state.module = module
-
     st.divider()
     st.markdown("**Study engine**")
     depth = st.selectbox("Analysis depth", ANALYSIS_DEPTHS, index=2, key="analysis_depth")
