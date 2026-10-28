@@ -412,9 +412,30 @@ def ai_text(task, content):
 
 
 def notes_generator():
+    NOTES_STYLES = [
+    "Structured study notes",
+    "Concise revision notes",
+    "Detailed lecture notes",
+    "Exam-focused notes",
+    "Beginner-friendly notes",
+    "Cornell notes",
+    "Mind-map-style outline",
+    "Custom instructions",
+]
+
+NOTES_SIZES = {
+    "Brief (quick overview, ~300 words)": "about 300 words. Cover only the most essential ideas.",
+    "Short (~600 words)": "about 600 words. Cover the main ideas with short explanations.",
+    "Medium (~1,000 words)": "about 1,000 words. Balance depth and readability, with examples.",
+    "Detailed (~1,800 words)": "about 1,800 words. Go in depth with definitions, explanations and examples.",
+    "Comprehensive (~3,000 words)": "about 3,000 words. Cover the topic thoroughly in well-organized sections, with examples and revision points.",
+}
+
+
+def notes_generator():
     section_title(
         "Notes Generator",
-        "Enter a topic and choose the style of notes you want. Your notes are saved to your workspace.",
+        "Type a topic, choose a style and a size, and get notes saved to your workspace.",
     )
 
     topic = st.text_input(
@@ -423,20 +444,15 @@ def notes_generator():
         key="notes_topic",
     )
 
-    style_choice = st.selectbox(
-        "Preferred notes style",
-        [
-            "Structured study notes",
-            "Concise revision notes",
-            "Detailed lecture notes",
-            "Exam-focused notes",
-            "Beginner-friendly notes",
-            "Cornell notes",
-            "Mind-map-style outline",
-            "Custom instructions",
-        ],
-        key="notes_style_choice",
-    )
+    col1, col2 = st.columns(2)
+    with col1:
+        style_choice = st.selectbox(
+            "Notes style", NOTES_STYLES, key="notes_style_choice"
+        )
+    with col2:
+        size_choice = st.selectbox(
+            "Notes size", list(NOTES_SIZES), index=2, key="notes_size_choice"
+        )
 
     if style_choice == "Custom instructions":
         custom_style = st.text_input(
@@ -454,29 +470,31 @@ def notes_generator():
         disabled=not bool(topic.strip()) or not bool(preferred_style),
         key="generate_topic_notes",
     ):
+        size_rule = NOTES_SIZES[size_choice]
         prompt = f"""
 You are a careful and helpful study tutor. Create clear, accurate study notes
 about the topic below, using general knowledge.
 
-Follow the requested notes style. Organize the notes with useful headings.
-Include key ideas, definitions, explanations, and examples where appropriate.
-For broad topics, organize the material into manageable sections. Do not claim
-the notes are based on a supplied document or cite sources you have not checked.
+Follow the requested notes style and the requested length. Organize the notes
+with useful headings. Include key ideas, definitions, explanations, and
+examples where appropriate. Do not claim the notes are based on a supplied
+document or cite sources you have not checked.
 
 Topic: {topic.strip()}
-
-Preferred notes style: {preferred_style}
+Notes style: {preferred_style}
+Length: {size_rule}
 """
+        output = None
         try:
             with st.spinner("Preparing your notes…"):
                 output = ai().generate(prompt)
-
             artifact_id = db.save(
                 "notes",
                 topic.strip(),
                 {
                     "topic": topic.strip(),
                     "style": preferred_style,
+                    "size": size_choice,
                     "text": output,
                 },
                 user_id=USER_ID,
@@ -484,11 +502,14 @@ Preferred notes style: {preferred_style}
             st.session_state["notes_output"] = output
             st.session_state["notes_output_id"] = artifact_id
             st.session_state["notes_output_title"] = topic.strip()
-            st.rerun()
         except AIError as exc:
             st.error(str(exc))
+            output = None
         except Exception as exc:
             st.error(f"Could not save your notes: {exc}")
+            output = None
+        if output:
+            st.rerun()
 
     output = st.session_state.get("notes_output")
     if output:
