@@ -1,13 +1,8 @@
-import csv
-import difflib
 import hashlib
 import html
-import io
 import json
-import random
 import re
 import time
-from datetime import datetime, timedelta, timezone
 
 import streamlit as st
 
@@ -24,7 +19,7 @@ from core.db import Database
 from core.extraction import content_hash, extract_file, extract_url
 from core.ai import AIError, GeminiService
 from core.logic import mistake_from_question, score_questions
-from core.validation import Flashcard, QuizPayload
+from core.validation import QuizPayload
 
 
 st.set_page_config(
@@ -210,23 +205,12 @@ st.markdown(
     .source-row{display:flex;justify-content:space-between;gap:1rem;padding:.85rem .1rem;border-bottom:1px solid var(--line)}
     .source-row:last-child{border-bottom:0}.source-title{color:#fff;font-weight:700}.source-meta{color:var(--muted);font-size:.75rem}
     .empty-state{text-align:center;padding:1.8rem;color:var(--muted)}
-    .flashcard{
-      min-height:300px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;
-      padding:2.4rem;border:1px solid rgba(139,124,255,.25);border-radius:28px;
-      background:radial-gradient(circle at 50% 0%,rgba(139,124,255,.16),transparent 55%),rgba(16,18,34,.76);
-      box-shadow:var(--shadow);animation:card-in .38s cubic-bezier(.2,.8,.2,1)
-    }
-    .flashcard.is-back{background:radial-gradient(circle at 50% 0%,rgba(98,230,167,.12),transparent 55%),rgba(16,18,34,.76)}
-    .flashcard-label{color:#aaa1ff;font-size:.7rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin-bottom:1rem}
-    .flashcard-copy{color:#fff;font-size:1.25rem;line-height:1.6;max-width:780px}
     .auth-panel{max-width:700px;margin:8vh auto;background:var(--panel);border:1px solid var(--line);border-radius:26px;padding:2.3rem;box-shadow:var(--shadow)}
     @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes card-in{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
     @media(max-width:900px){.quick-grid{grid-template-columns:1fr 1fr}}
     @media(max-width:700px){
       [data-testid="stMainBlockContainer"]{padding:.7rem .8rem 3rem}
       .hero-new{padding:2rem 1.35rem;border-radius:23px}.hero-new h1{font-size:2.35rem!important}
-      .quick-grid{grid-template-columns:1fr}.app-topbar{border-radius:14px}.flashcard{min-height:230px;padding:1.3rem}
     }
     @media(prefers-reduced-motion:reduce){
       *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
@@ -251,7 +235,7 @@ def authenticated_user_id():
         unsafe_allow_html=True,
     )
     st.title("Sign in to your study space")
-    st.write("Your sources, chats, flashcards, progress, and mistakes are kept in a separate account workspace.")
+    st.write("Your sources, chats, study notes, progress, and mistakes are kept in a separate account workspace.")
     if hasattr(st, "login"):
         if st.button("Continue with Google", type="primary"):
             try:
@@ -272,15 +256,23 @@ db = Database(DB_PATH)
 for key, default in {
     "answers": {}, "quiz": None, "exam": None, "source": "", "source_id": None,
     "module": "Dashboard", "chat": [], "chat_artifact_id": None, "chat_source_id": None,
-    "cards": [], "active_deck_id": None, "flash_index": 0, "flash_revealed": False,
 }.items():
     if key not in st.session_state:
         st.session_state[key] = default
 
 MODULES = [
-    "Dashboard", "Universal Summarizer", "Flashcards", "Chat with Material",
-     "Mock Exam", "Mistake Notebook",
+    "Dashboard",
+    "Universal Summarizer",
+    "Notes Generator",
+    "Chat with Material",
+    "Mock Exam",
+    "Mistake Notebook",
 ]
+
+if st.session_state.module not in MODULES:
+    st.session_state.module = "Dashboard"
+if st.session_state.get("nav_module") not in MODULES:
+    st.session_state.nav_module = st.session_state.module
 
 
 def go_to(target):
@@ -296,12 +288,12 @@ with st.sidebar:
     )
     st.markdown("### Workspace")
     nav_labels = {
-        "Dashboard":"⌂  Home",
-        "Universal Summarizer":"✦  Summarize",
-        "Flashcards":"▣  Flashcards",
-        "Chat with Material":"◌  Study chat",
-        "Mock Exam":"◉  Mock exam",
-        "Mistake Notebook":"↗  Mistakes",
+        "Dashboard": "⌂  Home",
+        "Universal Summarizer": "✦  Summarize",
+        "Notes Generator": "▤  Notes",
+        "Chat with Material": "◌  Study chat",
+        "Mock Exam": "◉  Mock exam",
+        "Mistake Notebook": "↗  Mistakes",
     }
     
     selected_module = st.radio(
@@ -319,7 +311,7 @@ with st.sidebar:
     depth = st.selectbox("Analysis depth", ANALYSIS_DEPTHS, index=2, key="analysis_depth")
     st.caption(f"Model · {MODEL}")
     st.markdown(
-        '<div style="margin-top:.8rem;padding:.85rem;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.035);color:#8e94ad;font-size:.75rem;line-height:1.55">Build a source once. Summarize it, quiz it, turn it into cards, and ask questions without leaving your workspace.</div>',
+        '<div style="margin-top:.8rem;padding:.85rem;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.035);color:#8e94ad;font-size:.75rem;line-height:1.55">Create notes from a topic, summarize material, take a mock exam, and ask questions without leaving your workspace.</div>',
         unsafe_allow_html=True,
     )
     st.divider()
@@ -419,26 +411,145 @@ def ai_text(task, content):
         return None
 
 
+def notes_generator():
+    section_title(
+        "Notes Generator",
+        "Enter a topic and choose the style of notes you want. Your notes are saved to your workspace.",
+    )
+
+    topic = st.text_input(
+        "Topic name",
+        placeholder="e.g. Photosynthesis, SQL joins, or World War I",
+        key="notes_topic",
+    )
+
+    style_choice = st.selectbox(
+        "Preferred notes style",
+        [
+            "Structured study notes",
+            "Concise revision notes",
+            "Detailed lecture notes",
+            "Exam-focused notes",
+            "Beginner-friendly notes",
+            "Cornell notes",
+            "Mind-map-style outline",
+            "Custom instructions",
+        ],
+        key="notes_style_choice",
+    )
+
+    if style_choice == "Custom instructions":
+        custom_style = st.text_input(
+            "Describe the notes style you prefer",
+            placeholder="e.g. Use question-and-answer format with examples",
+            key="notes_custom_style",
+        )
+        preferred_style = custom_style.strip()
+    else:
+        preferred_style = style_choice
+
+    if st.button(
+        "Generate notes",
+        type="primary",
+        disabled=not bool(topic.strip()) or not bool(preferred_style),
+        key="generate_topic_notes",
+    ):
+        prompt = f"""
+You are a careful and helpful study tutor. Create clear, accurate study notes
+about the topic below, using general knowledge.
+
+Follow the requested notes style. Organize the notes with useful headings.
+Include key ideas, definitions, explanations, and examples where appropriate.
+For broad topics, organize the material into manageable sections. Do not claim
+the notes are based on a supplied document or cite sources you have not checked.
+
+Topic: {topic.strip()}
+
+Preferred notes style: {preferred_style}
+"""
+        try:
+            with st.spinner("Preparing your notes…"):
+                output = ai().generate(prompt)
+
+            artifact_id = db.save(
+                "notes",
+                topic.strip(),
+                {
+                    "topic": topic.strip(),
+                    "style": preferred_style,
+                    "text": output,
+                },
+                user_id=USER_ID,
+            )
+            st.session_state["notes_output"] = output
+            st.session_state["notes_output_id"] = artifact_id
+            st.session_state["notes_output_title"] = topic.strip()
+            st.rerun()
+        except AIError as exc:
+            st.error(str(exc))
+        except Exception as exc:
+            st.error(f"Could not save your notes: {exc}")
+
+    output = st.session_state.get("notes_output")
+    if output:
+        st.markdown("### Your notes")
+        st.markdown(output)
+        filename = re.sub(
+            r"[^A-Za-z0-9._-]+",
+            "_",
+            st.session_state.get("notes_output_title", "study-notes"),
+        ).strip("._") or "study-notes"
+        st.download_button(
+            "Download notes as text",
+            output,
+            file_name=f"{filename}.txt",
+            mime="text/plain",
+            key="download_topic_notes",
+        )
+
+    saved_notes = db.artifacts("notes", user_id=USER_ID)
+    if saved_notes:
+        with st.expander("Previously generated notes"):
+            selected_id = st.selectbox(
+                "Saved note sets",
+                [item["id"] for item in saved_notes],
+                format_func=lambda value: next(
+                    (item["title"] for item in saved_notes if item["id"] == value),
+                    "Saved notes",
+                ),
+                key="saved_notes_picker",
+            )
+            if st.button("Load saved notes", key="load_saved_notes"):
+                selected = next(
+                    item for item in saved_notes if item["id"] == selected_id
+                )
+                payload = selected.get("payload", {})
+                st.session_state["notes_output"] = payload.get("text", "")
+                st.session_state["notes_output_id"] = selected["id"]
+                st.session_state["notes_output_title"] = selected["title"]
+                st.rerun()
+
+
 def dashboard():
     sources = db.sources(user_id=USER_ID)
-    cards_count = len(db.artifacts("flashcards", user_id=USER_ID))
+    notes_count = len(db.artifacts("notes", user_id=USER_ID))
     mistakes_count = sum(item["status"] != "Reviewed" for item in db.mistakes(user_id=USER_ID))
 
     st.markdown(
-        '<div class="hero-new"><div class="hero-kicker">PERSONAL LEARNING OS</div><h1>Study less randomly.<br>Learn with a system.</h1><p>Bring your material into one workspace, then move through the shortest useful path: understand → practice → recall → fix.</p><div class="hero-pills"><span class="hero-pill">AI summaries</span><span class="hero-pill">Active recall</span><span class="hero-pill">Mock exams</span><span class="hero-pill">Mistake tracking</span></div></div>',
+        '<div class="hero-new"><div class="hero-kicker">PERSONAL LEARNING OS</div><h1>Study less randomly.<br>Learn with a system.</h1><p>Bring your material into one workspace, then move through the shortest useful path: understand → make notes → practice → fix.</p><div class="hero-pills"><span class="hero-pill">AI summaries</span><span class="hero-pill">Topic notes</span><span class="hero-pill">Mock exams</span><span class="hero-pill">Mistake tracking</span></div></div>',
         unsafe_allow_html=True,
     )
 
     st.markdown('<div class="section-heading"><h3>Today at a glance</h3><span class="section-note">Your current workspace</span></div>', unsafe_allow_html=True)
     cols = st.columns(3)
-    for col, (label, value) in zip(cols, [("Sources", len(sources)), ("Flashcard decks", cards_count), ("Open mistakes", mistakes_count)]):
+    for col, (label, value) in zip(cols, [("Sources", len(sources)), ("Note sets", notes_count), ("Open mistakes", mistakes_count)]):
         with col:
             st.metric(label, value)
 
     st.markdown('<div class="section-heading"><h3>Choose your next move</h3><span class="section-note">Designed as a learning flow, not a menu</span></div>', unsafe_allow_html=True)
     tools = [
         ("✦", "Understand", "Universal Summarizer", "Turn dense material into a clean explanation, outline, or revision summary."),
-        ("▣", "Recall", "Flashcards", "Convert material into active-recall cards and resume where you stopped."),
+        ("▤", "Create", "Notes Generator", "Create and save study notes from a topic in your preferred style."),
         ("◌", "Ask", "Chat with Material", "Ask questions and get answers grounded in the material you loaded."),
         ("◉", "Practice", "Mock Exam", "Generate a timed exam and expose the topics you actually struggle with."),
         ("↗", "Fix", "Mistake Notebook", "Review missed questions instead of repeatedly studying what you already know."),
@@ -600,175 +711,6 @@ def text_module(kind, label, task):
         c2.download_button("Download as text", edited, file_name=f"{kind}.txt", mime="text/plain", key=f"download_{kind}")
 
 
-def _normalise_deck_payload(payload):
-    if isinstance(payload, list):
-        cards = payload
-        index = 0
-    elif isinstance(payload, dict):
-        cards = payload.get("cards", [])
-        index = int(payload.get("review_index", payload.get("index", 0)) or 0)
-    else:
-        cards, index = [], 0
-    for card in cards:
-        legacy = card.get("rating", "Again")
-        card["rating"] = {"Needs Review": "Again", "Difficult": "Hard"}.get(legacy, legacy)
-        card.setdefault("review_count", 0)
-        card.setdefault("mastery", 0)
-        card.setdefault("interval_days", 0)
-    return {"cards": cards, "review_index": index}
-
-
-def _save_deck(artifact_id, payload, title=None):
-    return db.update_artifact(artifact_id, payload, title=title, user_id=USER_ID)
-
-
-def flashcards():
-    section_title("Flashcards", "Build active-recall decks, rate each review, and resume your progress later.")
-    content = source_box("flashcards")
-    name_col, count_col = st.columns([2, 1])
-    with name_col:
-        deck_name = st.text_input("Deck name", value="", key="new_deck_name", placeholder="e.g. Cell biology · Unit 3")
-    with count_col:
-        number = st.number_input("Number of cards", min_value=3, max_value=50, value=10, step=1, key="new_card_count")
-    if st.button("Generate a deck", type="primary", disabled=not bool(content), key="generate_flashcards"):
-        try:
-            raw = ai().json(
-                f'Create {number} concise, non-duplicative study flashcards. Return JSON '
-                f'{{"cards":[{{"front":str,"back":str}}]}}. Ground every card in this source: {content}'
-            )
-            cards = [Flashcard.model_validate(card).model_dump() for card in raw["cards"]]
-            cards = cards[:int(number)]
-            for card in cards:
-                card.update({"rating": "Again", "review_count": 0, "mastery": 0, "interval_days": 0, "last_reviewed": None})
-            title = deck_name.strip() or "Generated flashcards"
-            artifact_id = db.save("flashcards", title, {"cards": cards, "review_index": 0, "source_id": st.session_state.get("source_id")}, user_id=USER_ID)
-            st.session_state.active_deck_id = artifact_id
-            st.session_state.flash_index = 0
-            st.session_state.flash_revealed = False
-            st.rerun()
-        except Exception as exc:
-            st.error(str(exc))
-
-    decks = db.artifacts("flashcards", user_id=USER_ID)
-    if not decks:
-        st.markdown('<div class="empty-state"><strong>No decks yet.</strong><br>Add study material above, name a deck, and generate cards to start.</div>', unsafe_allow_html=True)
-        return
-    ids = [item["id"] for item in decks]
-    active_id = st.session_state.get("active_deck_id")
-    active_index = ids.index(active_id) if active_id in ids else 0
-    selected_id = st.selectbox("Your saved decks", ids, index=active_index, format_func=lambda value: next((item["title"] for item in decks if item["id"] == value), "Saved deck"), key="deck_picker")
-    selected_deck = next(item for item in decks if item["id"] == selected_id)
-    if selected_id != st.session_state.get("active_deck_id"):
-        st.session_state.active_deck_id = selected_id
-        saved_deck = _normalise_deck_payload(selected_deck.get("payload"))
-        st.session_state.flash_index = saved_deck.get("review_index", 0)
-        st.session_state.flash_revealed = False
-    deck = _normalise_deck_payload(selected_deck.get("payload"))
-    cards = deck["cards"]
-    if not cards:
-        st.warning("This deck has no cards.")
-        return
-    st.markdown(f"**{len(cards)} cards** · saved progress resumes automatically")
-    mode = st.selectbox("Review mode", ["Flip cards", "Write an answer", "Rapid review", "Difficult only"], key="flash_mode")
-    controls = st.columns(3)
-    if controls[0].button("Shuffle", key="shuffle_deck"):
-        random.shuffle(cards)
-        deck["review_index"] = 0
-        _save_deck(selected_id, deck)
-        st.session_state.flash_index = 0
-        st.session_state.flash_revealed = False
-        st.rerun()
-    if controls[1].button("Reset session", key="reset_deck_session"):
-        deck["review_index"] = 0
-        _save_deck(selected_id, deck)
-        st.session_state.flash_index = 0
-        st.session_state.flash_revealed = False
-        st.rerun()
-    total_reviews = sum(int(card.get("review_count", 0)) for card in cards)
-    controls[2].metric("Reviews logged", total_reviews)
-
-    review_cards = [(original_index, card) for original_index, card in enumerate(cards)]
-    if mode == "Difficult only":
-        review_cards = [(index, card) for index, card in review_cards if card.get("rating") in {"Again", "Hard"}]
-    if not review_cards:
-        st.success("No difficult cards in this deck. Nice work.")
-        return
-    index = min(int(st.session_state.get("flash_index", deck.get("review_index", 0))), len(review_cards) - 1)
-    original_index, card = review_cards[index]
-    st.progress((index + 1) / len(review_cards), text=f"Card {index + 1} of {len(review_cards)}" if mode == "Difficult only" else f"Card {index + 1} of {len(review_cards)}")
-    st.caption(f"Current rating · {card.get('rating', 'Again')} · Mastery {int(card.get('mastery', 0))}%")
-
-    revealed = bool(st.session_state.get("flash_revealed", False)) or mode == "Rapid review"
-    card_class = "is-back" if revealed else "is-front"
-    card_text = card.get("back", "") if revealed else card.get("front", "")
-    card_label = "Answer" if revealed else "Prompt"
-    st.markdown(
-        f'<div class="flashcard {card_class}"><div class="flashcard-label">{card_label}</div><div class="flashcard-copy">{html.escape(str(card_text))}</div></div>',
-        unsafe_allow_html=True,
-    )
-    if mode == "Write an answer":
-        answer = st.text_area("Write your answer before revealing", key=f"write_answer_{selected_id}_{original_index}", height=90, placeholder="Recall the answer in your own words…")
-        if st.button("Compare with answer", key=f"compare_{selected_id}_{original_index}"):
-            similarity = difflib.SequenceMatcher(None, answer.strip().lower(), str(card.get("back", "")).strip().lower()).ratio() if answer.strip() else 0
-            st.session_state[f"answer_similarity_{selected_id}_{original_index}"] = similarity
-            st.session_state.flash_revealed = True
-            st.rerun()
-    elif mode != "Rapid review" and not revealed:
-        if st.button("Flip card · reveal answer", type="primary", key=f"flip_{selected_id}_{original_index}"):
-            st.session_state.flash_revealed = True
-            st.rerun()
-    elif mode == "Rapid review" and not revealed:
-        st.session_state.flash_revealed = True
-        st.rerun()
-
-    if revealed and mode == "Write an answer":
-        similarity = st.session_state.get(f"answer_similarity_{selected_id}_{original_index}")
-        if similarity is not None:
-            st.info(f"Rough text similarity: {similarity:.0%}. This is string overlap, not semantic grading; compare your response with the reference and self-rate.")
-        st.markdown("**Reference answer**")
-        st.write(card.get("back", ""))
-    if revealed:
-        st.markdown("**How well did you recall it?**")
-        rating_cols = st.columns(4)
-        for col, rating in zip(rating_cols, ["Again", "Hard", "Good", "Easy"]):
-            if col.button(rating, key=f"rate_{selected_id}_{original_index}_{rating}", use_container_width=True):
-                old_interval = float(card.get("interval_days", 0) or 0)
-                if rating == "Again":
-                    next_interval = 0
-                    card["mastery"] = max(0, int(card.get("mastery", 0)) - 10)
-                elif rating == "Hard":
-                    next_interval = max(1, round(old_interval * 1.2))
-                    card["mastery"] = min(100, int(card.get("mastery", 0)) + 8)
-                elif rating == "Good":
-                    next_interval = max(1, round(old_interval * 2))
-                    card["mastery"] = min(100, int(card.get("mastery", 0)) + 16)
-                else:
-                    next_interval = max(4, round(old_interval * 2.5))
-                    card["mastery"] = min(100, int(card.get("mastery", 0)) + 22)
-                card["rating"] = rating
-                card["review_count"] = int(card.get("review_count", 0)) + 1
-                card["interval_days"] = next_interval
-                card["last_reviewed"] = datetime.now(timezone.utc).isoformat()
-                card["due_at"] = (datetime.now(timezone.utc) + timedelta(days=next_interval)).isoformat() if next_interval else datetime.now(timezone.utc).isoformat()
-                if mode == "Difficult only" and rating in {"Good", "Easy"}:
-                    next_index = index
-                else:
-                    next_index = index + 1 if index + 1 < len(review_cards) else 0
-                deck["review_index"] = next_index
-                _save_deck(selected_id, deck)
-                st.session_state.flash_index = deck["review_index"]
-                st.session_state.flash_revealed = False
-                st.rerun()
-
-    st.markdown("<div class='section-heading'><h3>Deck mastery</h3><span class='section-note'>Ratings and session position are saved in your account</span></div>", unsafe_allow_html=True)
-    csv_buffer = io.StringIO()
-    writer = csv.writer(csv_buffer)
-    writer.writerow(["front", "back", "rating", "mastery", "review_count", "due_at"])
-    for item in cards:
-        writer.writerow([item.get("front", ""), item.get("back", ""), item.get("rating", "Again"), item.get("mastery", 0), item.get("review_count", 0), item.get("due_at", "")])
-    st.download_button("Download deck as CSV", csv_buffer.getvalue(), file_name=f"{selected_deck['title']}.csv", mime="text/csv", key=f"download_deck_{selected_id}")
-
-
 def mistakes():
     section_title("Mistake Notebook", "A practical, searchable list of questions worth another look.")
     items = db.mistakes(user_id=USER_ID)
@@ -841,8 +783,8 @@ elif module == "Mock Exam":
     quiz_page(exam=True)
 elif module == "Universal Summarizer":
     text_module("summary", "Universal Summarizer", "Summarize the source")
-elif module == "Flashcards":
-    flashcards()
+elif module == "Notes Generator":
+    notes_generator()
 elif module == "Mistake Notebook":
     mistakes()
 elif module == "Chat with Material":
