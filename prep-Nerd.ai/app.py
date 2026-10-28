@@ -254,7 +254,7 @@ USER_ID = authenticated_user_id()
 db = Database(DB_PATH)
 
 for key, default in {
-    "answers": {}, "quiz": None, "exam": None, "source": "", "source_id": None,
+    "answers": {}, "exam": None, "source": "", "source_id": None,
     "module": "Dashboard", "chat": [], "chat_artifact_id": None, "chat_source_id": None,
 }.items():
     if key not in st.session_state:
@@ -577,22 +577,18 @@ def dashboard():
         st.markdown('<div class="empty-state"><strong>No study source yet.</strong><br>Open any tool and create one. It will become reusable across your workspace.</div>', unsafe_allow_html=True)
 
 
-def quiz_page(exam=False):
-    title = "Mock Exam" if exam else "Quiz Generator"
-    intro = "Practice under a timer, then review your results." if exam else "Create a quick practice set from the material you are learning."
-    section_title(title, intro)
-    content = source_box("mock-exam" if exam else "quiz")
+def mock_exam():
+    section_title("Mock Exam", "Practice under a timer, then review your answers and mistakes.")
+    content = source_box("mock-exam")
     col1, col2 = st.columns(2)
     with col1:
-        count = st.selectbox("Number of questions", QUESTION_COUNTS, index=0, key=f"question_count_{exam}")
+        count = st.selectbox("Number of questions", QUESTION_COUNTS, index=0, key="exam_question_count")
     with col2:
-        difficulty = st.selectbox("Difficulty", DIFFICULTIES, index=1, key=f"difficulty_{exam}")
-    minutes = None
-    if exam:
-        minutes = st.slider("Time limit", 5, 90, 20, format="%d minutes", key="exam_time_limit")
-        st.caption("Your answers are kept as you move through the exam. Correct answers appear after submission.")
+        difficulty = st.selectbox("Difficulty", DIFFICULTIES, index=1, key="exam_difficulty")
+    minutes = st.slider("Time limit", 5, 90, 20, format="%d minutes", key="exam_time_limit")
+    st.caption("Your answers are kept as you move through the exam. Correct answers and explanations appear after submission.")
 
-    if st.button("Generate questions", type="primary", disabled=not bool(content), key=f"generate_questions_{exam}"):
+    if st.button("Generate mock exam", type="primary", disabled=not bool(content), key="generate_mock_exam"):
         prompt = (
             f'Create exactly {count} unique multiple-choice questions at {difficulty} difficulty. '
             f'Return ONLY JSON: {{"questions":[{{"question":str,"options":{{"A":str,"B":str,"C":str,"D":str}},'
@@ -600,23 +596,25 @@ def quiz_page(exam=False):
         )
         try:
             parsed = QuizPayload.model_validate(ai().json(prompt)).model_dump()
-            if exam:
-                st.session_state.exam = {"questions": parsed["questions"], "started": time.time(), "limit": minutes * 60, "submitted": False, "results_saved": False}
-                st.session_state.quiz = None
-            else:
-                st.session_state.quiz = {"questions": parsed["questions"], "submitted": False, "results_saved": False}
-                st.session_state.exam = None
+            st.session_state.exam = {
+                "questions": parsed["questions"],
+                "started": time.time(),
+                "limit": minutes * 60,
+                "submitted": False,
+                "results_saved": False,
+            }
             st.session_state.answers = {}
             st.rerun()
         except Exception as exc:
             st.error(str(exc))
 
-    state = st.session_state.exam if exam else st.session_state.quiz
+    state = st.session_state.exam
     if not state:
         return
+
     questions = state["questions"]
     submitted = state.get("submitted", False)
-    if exam and not submitted:
+    if not submitted:
         remaining = max(0, int(state["limit"] - (time.time() - state["started"])))
         st.progress(len(st.session_state.answers) / max(1, len(questions)))
         st.markdown(f"**Time remaining** · {remaining // 60:02d}:{remaining % 60:02d}")
@@ -628,37 +626,44 @@ def quiz_page(exam=False):
     for index, question in enumerate(questions):
         st.markdown(f"#### {index + 1}. {question['question']}")
         choice = st.radio(
-            "Choose one answer", list(question["options"]),
+            "Choose one answer",
+            list(question["options"]),
             format_func=lambda key, options=question["options"]: f"{key}. {options[key]}",
-            key=f'{"exam" if exam else "quiz"}_{index}', index=None,
-            disabled=submitted, label_visibility="collapsed",
+            key=f"exam_{index}",
+            index=None,
+            disabled=submitted,
+            label_visibility="collapsed",
         )
         if choice:
             st.session_state.answers[index] = choice
-        if not exam and question.get("hint") and st.checkbox("Show a hint", key=f"hint_{index}"):
-            st.info(question["hint"])
-        if submitted and not exam:
-            st.markdown(f"**Correct answer: {question['correct_answer']}** · {question['explanation']}")
+        if submitted:
+            st.markdown(
+                f"**Correct answer: {question['correct_answer']}** · {question['explanation']}"
+            )
         st.divider()
 
-    if st.button("Submit exam" if exam else "Check my answers", disabled=submitted, key=f"submit_{exam}"):
+    if st.button("Submit exam", disabled=submitted, key="submit_mock_exam"):
         state["submitted"] = True
         st.rerun()
+
     if submitted:
         result = score_questions(questions, st.session_state.answers)
-        st.success(f"Your score: **{result['correct']} / {result['total']}** · {result['percentage']}% · {result['unanswered']} unanswered")
+        st.success(
+            f"Your score: **{result['correct']} / {result['total']}** · "
+            f"{result['percentage']}% · {result['unanswered']} unanswered"
+        )
         if not state.get("results_saved"):
-            db.save("exam_results" if exam else "quiz_results", title, result, user_id=USER_ID)
+            db.save("exam_results", "Mock Exam", result, user_id=USER_ID)
             for index, question in enumerate(questions):
                 if st.session_state.answers.get(index) != question["correct_answer"]:
-                    db.add_mistake(mistake_from_question(question, st.session_state.answers.get(index)), user_id=USER_ID)
+                    db.add_mistake(
+                        mistake_from_question(question, st.session_state.answers.get(index)),
+                        user_id=USER_ID,
+                    )
             state["results_saved"] = True
-        if st.button("Start a new set", key=f"new_set_{exam}"):
+        if st.button("Start a new mock exam", key="new_mock_exam"):
             st.session_state.answers = {}
-            if exam:
-                st.session_state.exam = None
-            else:
-                st.session_state.quiz = None
+            st.session_state.exam = None
             st.rerun()
 
 
@@ -780,7 +785,7 @@ def chat():
 if module == "Dashboard":
     dashboard()
 elif module == "Mock Exam":
-    quiz_page(exam=True)
+    mock_exam()
 elif module == "Universal Summarizer":
     text_module("summary", "Universal Summarizer", "Summarize the source")
 elif module == "Notes Generator":
